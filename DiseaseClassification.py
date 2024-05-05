@@ -157,10 +157,13 @@ model.build(input_shape=input_shape)
 
 model.summary()
 
-
+# metrics = what metric will decide whether model is good or not
 model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False), metrics = ['accuracy'])
 
+history = model.fit(train_ds, epochs=EPOCH, batch_size=BATCH_SIZE, verbose=1, validation_data=val_ds)
 
+print("------------STARTING TEST----------------")
+scores = model.evaluate(test_ds)
 
 
 

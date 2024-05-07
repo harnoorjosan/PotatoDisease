@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
+# In[24]:
 
 
 import tensorflow as tf
-from keras import models, layers
-#from tensorflow.keras import models, layers
+from tensorflow.keras import models, layers
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-# In[15]:
+# In[25]:
 
 
 BASE_DIR = "PlantVillage"
@@ -24,18 +24,16 @@ dataset = tf.keras.preprocessing.image_dataset_from_directory(
         image_size=(IMG_SIZE, IMG_SIZE), 
         batch_size=BATCH_SIZE
     )
-print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-print("len of dataset =", len(dataset))
 
 
-# In[6]:
+# In[26]:
 
 
 class_names = dataset.class_names
-print("class_names =", class_names)
+class_names
 
 
-# In[7]:
+# In[27]:
 
 
 '''
@@ -50,7 +48,7 @@ train_ds = dataset.take(54) #80% data is training
 len(train_ds)
 
 
-# In[8]:
+# In[28]:
 
 
 non_train_ds = dataset.skip(54)
@@ -58,14 +56,14 @@ val_ds = non_train_ds.take(6)
 len(val_ds)
 
 
-# In[9]:
+# In[29]:
 
 
 test_ds = non_train_ds.skip(6)
 len(test_ds)
 
 
-# In[10]:
+# In[30]:
 
 
 def get_ds_partitions(ds, train_split=0.8, val_split=0.1, test_split=0.1, shuffle=True, shuffle_size=10000):
@@ -85,14 +83,13 @@ def get_ds_partitions(ds, train_split=0.8, val_split=0.1, test_split=0.1, shuffl
     return train_ds, val_ds, test_ds
 
 
-# In[11]:
+# In[31]:
 
 
 train_ds, val_ds, test_ds = get_ds_partitions(dataset)
-print("len train ds =", len(train_ds))
 
 
-# In[12]:
+# In[32]:
 
 
 '''
@@ -103,10 +100,8 @@ train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
 val_ds = val_ds.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
 test = test_ds.cache().shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE)
 
-print("len train ds after prefetch =", len(train_ds))
 
-
-# In[13]:
+# In[33]:
 
 
 '''
@@ -125,7 +120,7 @@ data_augmentation = tf.keras.Sequential([
 ])
 
 
-# In[18]:
+# In[34]:
 
 
 # CNN layers: Trial and eroor of alternating Conv2D and MaxPooling
@@ -153,17 +148,76 @@ model = models.Sequential([
 model.build(input_shape=input_shape)
 
 
+# In[35]:
 
 
 model.summary()
 
-# metrics = what metric will decide whether model is good or not
+
+# In[36]:
+
+
 model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False), metrics = ['accuracy'])
+
+
+# In[37]:
+
 
 history = model.fit(train_ds, epochs=EPOCH, batch_size=BATCH_SIZE, verbose=1, validation_data=val_ds)
 
-print("------------STARTING TEST----------------")
+
+# In[39]:
+
+
 scores = model.evaluate(test_ds)
+
+
+# In[40]:
+
+
+scores
+
+
+# In[41]:
+
+
+history.history.keys()
+
+
+# In[43]:
+
+
+import numpy as np
+def predict(model, img):
+    img_array = tf.keras.preprocessing.image.img_to_array(images[i].numpy())
+    img_array = tf.expand_dims(img_array, 0) # create a batch
+    predictions=model.predict(img_array)
+    predicted_class=class_names[np.argmax(predictions[0])]
+    confidence = round(100*(np.max(predictions[0])), 2)
+    return predicted_class, confidence
+
+
+# In[48]:
+
+
+plt.figure(figsize = (15,15))
+for images, labels in test_ds.take(1):
+    for i in range(9):
+        ax = plt.subplot(3,3,i+1)
+        plt.imshow(images[i].numpy().astype("uint8"))
+        predicted_class, confidence = predict(model, images[i].numpy())
+        actual_class = class_names[labels[i]]
+        plt.title(f"Actual: {actual_class} \n Predicted: {predicted_class} \n Confidence: {confidence}")
+        plt.axis("off")
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
 
 
 

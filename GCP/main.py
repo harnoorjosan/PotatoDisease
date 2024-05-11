@@ -25,4 +25,9 @@ def predict(request):
     img = request.files["file"]
     img = np.array(Image.open(img).convert("RGB").resize(256, 256))
     img = img/255 # img pixels should be between 0 and 1
+    img_batch = np.expand_dims(img,0)
+    prediction = model.predict(img_batch)
+    predicted_class = CLASS_NAMES[np.argmax(prediction[0])]
+    confidence = np.max(prediction[0])
+    return {'class': predicted_class, 'confidence': float(confidence)}
 
